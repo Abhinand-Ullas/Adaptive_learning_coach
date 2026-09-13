@@ -13,7 +13,12 @@ def seed_database():
     with open(schema_path, 'r') as f:
         cursor.executescript(f.read())
 
-    # 1. Insert base student profiles matching the new schema
+    # 1. Clear existing records to ensure idempotent seeding
+    cursor.execute("DELETE FROM quiz_question_logs")
+    cursor.execute("DELETE FROM quiz_attempts")
+    cursor.execute("DELETE FROM students")
+
+    # 2. Insert base student profiles matching the new schema
     mock_students = [
         ("1", "Anu", "BEGINNER"),
         ("2", "Rahul", "ADVANCED"),
@@ -23,6 +28,7 @@ def seed_database():
         INSERT OR REPLACE INTO students (student_id, name, current_level) 
         VALUES (?, ?, ?)
     """, mock_students)
+
 
     # 2. Insert chronological quiz attempts to feed the agent's score_history
     mock_attempts = [

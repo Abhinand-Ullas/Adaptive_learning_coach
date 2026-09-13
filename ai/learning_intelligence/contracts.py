@@ -122,9 +122,11 @@ def validate_and_guardrail_ai_decision(
     except (ValueError, TypeError):
         conf = assessment.confidence
 
-    # Extract coaching narrative
+    # Extract coaching narrative (supports Member 1 schemas: reasoning, behavioral_analysis)
     coaching_narrative = (
         ai_response.get("coaching_narrative")
+        or ai_response.get("reasoning")
+        or ai_response.get("behavioral_analysis")
         or ai_response.get("reason")
         or fallback_narrative
     )

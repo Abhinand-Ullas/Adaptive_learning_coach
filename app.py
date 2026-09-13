@@ -1,12 +1,11 @@
-"""Adaptive Learning Coach - Application Entry Point"""
-import os
-from dotenv import load_dotenv
-
-# Automatically load the .env file so os.getenv("GEMINI_API_KEY") works everywhere
-load_dotenv()
+"""
+Adaptive Learning Coach - Application Entry Point.
+Delegates presentation to the dedicated ui/ package.
+"""
+from ui.dashboard import run_dashboard
 
 def main():
-    print("Starting Adaptive Learning Coach...")
-    
+    run_dashboard()
+
 if __name__ == "__main__":
     main()

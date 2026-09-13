@@ -16,5 +16,14 @@ def get_gemini_client() -> genai.Client:
 
 def get_default_model_name() -> str:
     """Returns the default model to use for the agent."""
-    # Using gemini-2.5-flash as the default for fast, cost-effective reasoning
-    return "gemini-2.5-flash"
+    # gemini-flash-latest is the active production flash tier
+    return os.getenv("GEMINI_MODEL", "gemini-flash-latest")
+
+def get_model_fallbacks() -> list:
+    """Returns ordered candidate models for automatic failover during spikes in demand."""
+    preferred = get_default_model_name()
+    candidates = [preferred, "gemini-flash-latest", "gemini-3.5-flash", "gemini-3.6-flash"]
+    return list(dict.fromkeys(candidates))
+
+
+

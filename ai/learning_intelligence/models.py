@@ -148,16 +148,27 @@ class LearningAssessment(BaseModel):
 
     def to_agent_payload(self) -> Dict[str, Any]:
         """
-        Formats a clean, serialized dictionary for Member 1 in Step 2.
+        Formats a clean, deduplicated dictionary for Member 1 in Step 2.
         Member 1 injects these keys directly into the Gemini prompt template.
         """
+        # Prior attempts excluding the current score to prevent duplicate data
+        past_scores = (
+            [round(s, 1) for s in self.metrics.recent_scores[:-1]]
+            if len(self.metrics.recent_scores) > 1
+            else []
+        )
+        current = (
+            round(self.metrics.recent_scores[-1], 1)
+            if self.metrics.recent_scores
+            else round(self.metrics.mastery_score, 1)
+        )
+
         return {
             "student_id": self.learner_id,
             "topic": self.topic,
             "current_difficulty": self.current_difficulty.value,
-            "current_score": round(self.metrics.recent_scores[-1], 1) if self.metrics.recent_scores else round(self.metrics.mastery_score, 1),
-            "score_history": [round(s, 1) for s in self.metrics.recent_scores],
-            "historical_average": round(self.metrics.historical_average, 1),
+            "current_score": current,
+            "past_score_history": past_scores,
             "mastery_score": round(self.metrics.mastery_score, 1),
             "score_trend": self.metrics.score_trend.value,
             "score_delta": round(self.metrics.score_delta, 1),
@@ -168,10 +179,29 @@ class LearningAssessment(BaseModel):
             "allowed_decisions": [d.value for d in self.allowed_decisions],
             "primary_strategy": self.primary_strategy.value,
             "reason_codes": [r.value for r in self.reason_codes],
-            "identified_gaps": self.identified_gaps,
-            "recommended_topics": self.recommended_topics,
             "is_cold_start": self.metrics.is_cold_start,
         }
+
+    def to_member1_format(self, time_spent_seconds: Optional[int] = None) -> Tuple[Dict[str, Any], Dict[str, Any]]:
+        """
+        Convenience adapter mapping Member 2 metrics to Member 1's exact prompt signature:
+        build_user_prompt(learner_context: dict, performance_metrics: dict)
+        """
+        time_minutes = round(time_spent_seconds / 60.0, 1) if time_spent_seconds else 1.0
+        
+        learner_context = {
+            "student_id": self.learner_id,
+            "course_name": "Python Programming",
+            "current_topic": self.topic,
+        }
+        performance_metrics = {
+            "recent_score_avg": round(self.metrics.mastery_score, 1),
+            "trend": self.metrics.score_trend.value.lower(),
+            "attempts_on_current_topic": len(self.metrics.recent_scores),
+            "completion_percentage": 100 if self.baseline_decision == DecisionType.ADVANCE else 50,
+            "time_spent_minutes": time_minutes,
+        }
+        return learner_context, performance_metrics
 
 
 class LearningDecision(BaseModel):

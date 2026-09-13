@@ -5,6 +5,13 @@ import sys
 # Ensure project root is in path for relative imports
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+# Enable UTF-8 for console output on Windows to prevent UnicodeEncodeError
+if hasattr(sys.stdout, "reconfigure"):
+    try:
+        sys.stdout.reconfigure(encoding="utf-8")
+    except Exception:
+        pass
+
 from validation.input_validator import clean_quiz_submission
 from validation.db_validator import validate_student_exists, validate_attempt_record
 
